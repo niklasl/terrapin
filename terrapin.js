@@ -53,7 +53,7 @@ function toBox (node, lines, opts) {
   }
 
   if ('@id' in node) {
-    const id = node['@id'].replace('_:', '')
+    const id = node['@id'].replace(/--+/, '-')
     const label = id
     return `${id}(${label})`
   }
