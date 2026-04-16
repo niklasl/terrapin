@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Terrapin - Turtle to Mermaid Tool</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
+
+    <script type="module">
+      // import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.14.0/+esm'
+      import * as transcribers from 'https://niklasl.github.io/ldtr/lib/transcribers.js'
+      import {toDiagram} from './terrapin.js'
+
+      async function parse (data, type = 'text/turtle') {
+        let transcribe = transcribers.transcribers[type]
+        return transcribe({ data, type, base: null })
+      }
+
+      mermaid.initialize({ startOnLoad: false })
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const datasourceArea = document.querySelector('textarea.turtle')
+        const diagramSourceArea = document.querySelector('textarea.mermaid')
+        const errorDiv = document.querySelector('div.error')
+        const graphDiv = document.querySelector('div.mermaid')
+
+        const render = async () => {
+          let diagram = null
+
+          try {
+            const data = await parse(datasourceArea.value)
+            diagram = await toDiagram(data)
+            errorDiv.innerText = ''
+          } catch (e) {
+            if (!e.location) throw e
+            const msg = e.name +' at Line: '+ e.location.start.line
+              +' Col: '+ e.location.start.column +'\n'+ e.message
+            errorDiv.innerText = `Error: ${msg}`
+            return
+          }
+
+          diagramSourceArea.value = diagram
+          const result = await mermaid.render('graphDiv', diagram)
+          graphDiv.innerHTML = result.svg
+        }
+
+        datasourceArea.onkeyup = async () => {
+          render()
+        }
+
+        diagramSourceArea.onkeyup = async () => {
+          const diagram = diagramSourceArea.value
+          const result = await mermaid.render('graphDiv', diagram)
+          graphDiv.innerHTML = result.svg
+        }
+
+        render()
+      })
+    </script>
+
+    <style>
+    </style>
+  </head>
+  <body>
+
+<textarea class="turtle" cols="80" rows="24">
+prefix bibo: &lt;http://purl.org/ontology/bibo/>
+prefix prov: &lt;http://www.w3.org/ns/prov#>
+prefix foaf: &lt;http://xmlns.com/foaf/0.1/>
+prefix dc: &lt;http://purl.org/dc/terms/>
+prefix rel: &lt;https://id.kb.se/relator/>
+
+_:novel
+  prov:qualifiedAttribution _:qa1 ,
+    _:qa2 ;
+  dc:contributor _:abc ,
+    _:xyz .
+
+_:qa1
+  prov:agent _:abc ;
+  prov:hadRole rel:author .
+
+_:qa2
+  prov:agent _:xyz ;
+  prov:hadRole rel:illustrator .
+</textarea>
+
+<textarea class="mermaid" cols="80" rows="24">
+</textarea>
+
+<div class="error">
+</div>
+
+<div class="mermaid">
+</div>
+
+  </body>
+</html>
