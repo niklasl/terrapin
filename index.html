@@ -2,13 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Terrapin - Turtle to Mermaid Tool</title>
+    <title>Terrapin - Turtle to Mermaid Converter</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
 
     <script type="module">
       // import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.14.0/+esm'
       import * as transcribers from 'https://niklasl.github.io/ldtr/lib/transcribers.js'
+
       import {toDiagram} from './terrapin.js'
 
       async function parse (data, type = 'text/turtle') {
@@ -21,15 +22,25 @@
       document.addEventListener('DOMContentLoaded', async () => {
         const datasourceArea = document.querySelector('textarea.turtle')
         const diagramSourceArea = document.querySelector('textarea.mermaid')
+
+        const showLiteralsInput = document.querySelector('input[name=showliterals]')
+        const showTypeInput = document.querySelector('input[name=showtypes]')
+        const lefttorightInput = document.querySelector('input[name=lefttoright]')
+
         const errorDiv = document.querySelector('div.error')
         const graphDiv = document.querySelector('div.mermaid')
 
         const render = async () => {
           let diagram = null
+          const opts = {
+            direction: lefttorightInput.checked ? 'LR' : 'TD',
+            showliterals: showLiteralsInput.checked,
+            showtypes: showTypeInput.checked,
+          }
 
           try {
             const data = await parse(datasourceArea.value)
-            diagram = await toDiagram(data)
+            diagram = await toDiagram(data, opts)
             errorDiv.innerText = ''
           } catch (e) {
             if (!e.location) throw e
@@ -44,9 +55,11 @@
           graphDiv.innerHTML = result.svg
         }
 
-        datasourceArea.onkeyup = async () => {
-          render()
+        for (const input of [datasourceArea, showLiteralsInput, showTypeInput, lefttorightInput]) {
+          input.onchange = async () => { render() }
         }
+
+        datasourceArea.onkeyup = async () => { render() }
 
         diagramSourceArea.onkeyup = async () => {
           const diagram = diagramSourceArea.value
@@ -59,9 +72,14 @@
     </script>
 
     <style>
+body { font-size: 10pt }
+h1 { font-size: 1.2rem }
+.error { color: red }
     </style>
   </head>
   <body>
+
+    <h1>Terrapin &mdash; Turtle to Mermaid Converter</h1>
 
 <textarea class="turtle" cols="80" rows="24">
 prefix bibo: &lt;http://purl.org/ontology/bibo/>
@@ -87,9 +105,13 @@ _:qa2
 
 <textarea class="mermaid" cols="80" rows="24">
 </textarea>
-
 <div class="error">
 </div>
+<nav>
+  <label><input type="checkbox" name="showliterals" checked> show literals</label>
+  <label><input type="checkbox" name="showtypes" checked> show types</label>
+  <label><input type="checkbox" name="lefttoright"> left-to-right</label>
+</nav>
 
 <div class="mermaid">
 </div>

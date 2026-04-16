@@ -1,40 +1,57 @@
-export async function toDiagram (data) {
+export async function toDiagram (data, opts = { direction: 'TD', showliterals: true, showtypes: true }) {
 
-  const lines = ['graph TD']
+  const lines = [`graph ${opts.direction}`]
   for (const node of data['@graph']) {
-    const s = toBox(node)
-    for (let p in node) {
-      if (p === '@id') continue
-
-      let values = node[p]
-      if (!Array.isArray(values)) {
-        values = [values]
-      }
-
-      if (p === '@type') {
-        for (const type of values) {
-            lines.push(`${s}-->|rdf:type|${type}`)
-        }
-        continue
-      }
-
-      p = p.replace(/[^A-Za-z0-9:]/, '')
-      for (const value of values) {
-        const o = toBox(value)
-        if (o) {
-          lines.push(`${s}-->|${p}|${o}`)
-        }
-      }
-    }
+    visitNode(node, lines, opts)
   }
   return lines.join('\n')
 }
 
-function toBox (node) {
-  if (typeof node !== 'object') {
-    const id = encodeURIComponent(node)
-    return `${id}[${node}]`
+function visitNode (node, lines, opts) {
+  const s = toBox(node, lines, opts)
+  for (let p in node) {
+    if (p === '@id') continue
+
+    let values = node[p]
+    if (!Array.isArray(values)) {
+      values = [values]
+    }
+
+    if (p === '@type') {
+      if (!opts.showtypes) continue
+
+      for (const type of values) {
+          lines.push(`${s}-->|rdf:type|${type}`)
+      }
+      continue
+    }
+
+    p = p.replace(/[^A-Za-z0-9:]/, '')
+    for (const value of values) {
+      const o = toBox(value, lines, opts)
+      if (o) {
+        lines.push(`${s}-->|${p}|${o}`)
+        if (typeof value === 'object' && '@id' in value) {
+          visitNode(value, lines, opts)
+        }
+      }
+    }
   }
+}
+
+let blankCounter = 0
+
+function toBox (node, lines, opts) {
+  if (typeof node !== 'object') {
+    if (!opts.showliterals) return null
+    const id = escape(node)
+    return `${id}["${node}"]`
+  }
+
+  if (!Array.isArray(node) && !('@id' in node)) {
+    node['@id'] = `_:b${++blankCounter}`
+  }
+
   if ('@id' in node) {
     const id = node['@id'].replace('_:', '')
     const label = id
