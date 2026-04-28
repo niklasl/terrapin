@@ -42,6 +42,23 @@ function visitNode (node, lines, opts) {
 let blankCounter = 0
 
 function toBox (node, lines, opts) {
+  if (typeof node === 'object' && '@value' in node) {
+    let dt = node['@type']
+    let lang = node['@language']
+    let dir = node['@direction']
+    node = node['@value']
+    let note = ''
+    if (dt) {
+      note = dt
+    } else if (lang) {
+      if (dir) {
+        lang += `--${dir}`
+      }
+      note = lang
+    }
+    if (note) node += ` [${note}]`
+  }
+
   if (typeof node !== 'object') {
     if (!opts.showliterals) return null
     const id = escape(node)

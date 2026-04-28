@@ -86,21 +86,25 @@ prefix bibo: &lt;http://purl.org/ontology/bibo/>
 prefix prov: &lt;http://www.w3.org/ns/prov#>
 prefix foaf: &lt;http://xmlns.com/foaf/0.1/>
 prefix dc: &lt;http://purl.org/dc/terms/>
-prefix rel: &lt;https://id.kb.se/relator/>
+prefix rel: &lt;http://id.loc.gov/vocabulary/relators/>
 
-_:novel
+_:novel a bibo:Book ;
+  dc:title "A Book"@en ;
   prov:qualifiedAttribution _:qa1 ,
     _:qa2 ;
   dc:contributor _:abc ,
     _:xyz .
 
-_:qa1
+_:qa1 a prov:Attribution ;
   prov:agent _:abc ;
-  prov:hadRole rel:author .
+  prov:hadRole rel:aut .
 
-_:qa2
+_:qa2 a prov:Attribution ;
   prov:agent _:xyz ;
-  prov:hadRole rel:illustrator .
+  prov:hadRole rel:ill .
+
+_:abc a foaf:Person ; foaf:name "A. Bc" .
+_:xyz a foaf:Person ; foaf:name "X. Yz" .
 </textarea>
 
 <textarea class="mermaid" cols="80" rows="24">
